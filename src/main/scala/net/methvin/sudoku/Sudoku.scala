@@ -1,18 +1,23 @@
 package net.methvin.sudoku
 
-object Sudoku extends App {
-  if (args.isEmpty) {
-    System.err.println("First argument should be the Sudoku board string.")
-    System.exit(1)
-  }
-  val board = Board.fromString(args(0))
-  println(
-    """
-      |Unsolved:
-      |%s
-      |
-      |Solved:
-      |%s
-    """.stripMargin.format(board, board.solve.getOrElse("No Solution")))
+import io.Source
 
+/**
+ * The main entry point for the Sudoku solver app
+ *
+ * The program gets sudoku puzzles from individual files whose names are given in arguments. If
+ * the string "-" is passed as an argument, the program reads from standard in instead of a file.
+ *
+ * When solving multiple puzzles, the output is printed with two blank lines between the
+ * solutions to separate them.
+ */
+object Sudoku extends App {
+  args.map {
+    case "-" => Source.stdin
+    case f => Source.fromFile(f)
+  }.foreach { source =>
+    val board = Board.fromString(source.mkString)
+    val solved = board.solve
+    println("\n" + solved.getOrElse("No Solution") + "\n")
+  }
 }
