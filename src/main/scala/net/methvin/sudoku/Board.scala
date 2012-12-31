@@ -7,6 +7,8 @@ import collection.IndexedSeqLike
 /**
  * An immutable data structure representing a Sudoku board.
  *
+ * @author Greg Methvin (greg@methvin.net)
+ *
  * @param cells A sequence of cells (left to right, top to bottom) of the board
  *
  * @author Greg Methvin (greg@methvin.net)

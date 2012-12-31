@@ -1,6 +1,6 @@
 # Sudoku solver #
 
-Written by Greg Methvin
+Written by Greg Methvin. For license information, see LICENSE file.
 
 This is a basic sudoku solver implementation (brute force) written in Scala.
 
