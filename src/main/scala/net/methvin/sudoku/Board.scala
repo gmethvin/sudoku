@@ -76,18 +76,23 @@ final case class Board(cells: Seq[Cell]) {
     val squareRow = Seq.fill(Board.SquareDim)("%s").mkString
     val fullRow = Seq.fill(Board.BoardDim / Board.SquareDim)(squareRow).mkString(" ")
     val rowOfSquares = Seq.fill(Board.SquareDim)(fullRow).mkString("\n")
-    val fullBoard = Seq.fill(Board.BoardDim / Board.SquareDim)(rowOfSquares).mkString("\n\n")
-    fullBoard
+    Seq.fill(Board.BoardDim / Board.SquareDim)(rowOfSquares).mkString("\n\n")
   }
 
-  override def toString: String = {
+  override def toString: String =
     boardFormat.format(cells.map(_.value.getOrElse(Board.EmptyChar)): _*)
-  }
+
 }
 
 object Board {
+
+  /** The dimension of a single square */
   val SquareDim = 3
+
+  /** The dimension of the whole board */
   val BoardDim = SquareDim * SquareDim
+
+  /** The size of the whole board (width*height) */
   val BoardSize = BoardDim * BoardDim
 
   /** A set of all possible values for this board */
@@ -113,13 +118,9 @@ object Board {
     (0 until BoardSize)
       .map(i => (i / BoardDim, i % BoardDim))
       .zip(getBoardValues(str))
-      .foldLeft(emptyBoard) { (board, v) =>
-        v match {
-          case (coord, Some(x)) =>
-            board.set(coord, x)
-          case _ =>
-            board
-        }
+      .foldLeft(emptyBoard) {
+        case (board, (coord, Some(x))) => board.set(coord, x)
+        case (board, _) => board
       }
   }
 
@@ -128,13 +129,13 @@ object Board {
    */
   private def getBoardValues(boardString: String): Seq[Option[Int]] = {
     val values = boardString.filterNot(_.isWhitespace).map(Character.digit(_, 10) match {
+      // only numbers 1-9 are counted as values; no other characters
       case d if d > 0 => Some(d)
       case _ => None
     })
-    if (values.length != BoardSize) {
+    if (values.length != BoardSize)
       throw new IllegalArgumentException(
-        "Sudoku must contain " + BoardSize + " cells, not " + values.length)
-    }
+        "Sudoku puzzle must contain " + BoardSize + " cells, not " + values.length)
     values
   }
 

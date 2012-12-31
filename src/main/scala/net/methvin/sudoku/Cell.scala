@@ -4,26 +4,18 @@ package net.methvin.sudoku
  * A cell on the Sudoku board.
  *
  * @author Greg Methvin (greg@methvin.net)
+ *
+ * @param row the row of the cell
+ * @param col the column of the cell
+ * @param values the set of possible values this cell can have
  */
-sealed abstract class Cell(_row: Int, _col: Int) {
-
-  /** The row on the board */
-  val row: Int = _row
-
-  /** The column on the board */
-  val col: Int = _col
-
-  /** The coordinate on the board (row, col) */
-  val coord: (Int, Int) = (_row, _col)
+sealed abstract class Cell(val row: Int, val col: Int, val values: Set[Int]) {
 
   /** The value of this cell, if it is set */
   val value: Option[Int]
 
-  /** The possible values this cell can have */
-  val values: Set[Int]
-
   /** Whether a value has been set for this cell */
-  val isSolved: Boolean
+  lazy val isSolved: Boolean = value.isDefined
 
   /**
    * Remove a possible value from this cell
@@ -33,13 +25,15 @@ sealed abstract class Cell(_row: Int, _col: Int) {
    */
   def -(v: Int): Cell
 
-  /**
-   * The subsquare number of this cell, zero-indexed, left to right, top to bottom
-   */
+  /** The coordinate on the board (row, col) */
+  val coord: (Int, Int) = (row, col)
+
+  /** The subsquare number of this cell, zero-indexed, left to right, top to bottom */
   val squareNumber: Int = row / Board.SquareDim * Board.SquareDim + col / Board.SquareDim
 
   /**
    * Check if this cell is in the same region (i.e could have the same number) as another cell
+   *
    * @param cell the other cell to check
    * @return true if this cell has the same row, column, or subsquare, false otherwise
    */
@@ -64,18 +58,17 @@ sealed abstract class Cell(_row: Int, _col: Int) {
  * A solved cell
  */
 final case class SolvedCell(
-  override val row: Int, override val col: Int, private val cellValue: Int) extends Cell(row, col) {
+  override val row: Int, override val col: Int, private val cellValue: Int)
+  extends Cell(row, col, Set(cellValue)) {
 
   val value = Some(cellValue)
-  val values = value.toSet
-  val isSolved = true
 
   def -(v: Int): SolvedCell = {
-    if (v == cellValue) {
+    // since this cell is solved, we cannot remove the value it contains
+    if (v == cellValue)
       throw new RuntimeException("(%d, %d) = %d has already been solved!".format(row, col, v))
-    } else {
-      this
-    }
+    // removing any other value is a no-op
+    this
   }
 }
 
@@ -84,10 +77,9 @@ final case class SolvedCell(
  */
 final case class UnsolvedCell(
   override val row: Int, override val col: Int, override val values: Set[Int] = Board.AllValues)
-  extends Cell(row, col) {
+  extends Cell(row, col, values) {
 
   val value = None
-  val isSolved = false
 
   def -(v: Int): UnsolvedCell =
     UnsolvedCell(row, col, values - v)
