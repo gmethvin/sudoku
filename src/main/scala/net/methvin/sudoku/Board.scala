@@ -1,5 +1,9 @@
 package net.methvin.sudoku
 
+import collection.mutable.{ArrayBuffer, Builder}
+import collection.generic.CanBuildFrom
+import collection.IndexedSeqLike
+
 /**
  * An immutable data structure representing a Sudoku board.
  *
@@ -7,7 +11,8 @@ package net.methvin.sudoku
  *
  * @author Greg Methvin (greg@methvin.net)
  */
-final case class Board(cells: Seq[Cell]) {
+final case class Board(cells: Seq[Cell])
+    extends IndexedSeq[Cell] with IndexedSeqLike[Cell, Board] {
 
   /**
    * A list of all cells which have not been solved, i.e. cells for which a value has not been set.
@@ -28,10 +33,17 @@ final case class Board(cells: Seq[Cell]) {
    * @param coord the coordinate (row, col)
    * @return the cell on the board for that coordinate
    */
-  def get(coord: (Int, Int)): Cell = {
+  def apply(coord: (Int, Int)): Cell = {
     val (row, col) = coord
     cells(Board.BoardDim * row + col)
   }
+
+  /**
+   * Get the ith cell in the board.
+   *
+   * @param i the index of the cell to get
+   */
+  def apply(i: Int) = cells(i)
 
   /**
    * Set a coordinate on the board to a value in a new board.
@@ -42,18 +54,18 @@ final case class Board(cells: Seq[Cell]) {
    */
   def set(coord: (Int, Int), value: Int): Board = {
     val (r, c) = coord
-    val cell = get(coord)
+    val cell = this(r, c)
     if (!cell.hasPossibleValue(value)) {
       throw new RuntimeException("(%d, %d) = %d is invalid".format(r, c, value))
     }
-    Board(cells.map { cc =>
+    map { cc =>
       if (cc == cell)
         SolvedCell(r, c, value)
       else if (cc.isSameRegion(cell))
         cc - value
       else
         cc
-    })
+    }
   }
 
   /**
@@ -72,7 +84,7 @@ final case class Board(cells: Seq[Cell]) {
     }
   }
 
-  private lazy val boardFormat = {
+  private lazy val boardFormat: String = {
     val squareRow = Seq.fill(Board.SquareDim)("%s").mkString
     val fullRow = Seq.fill(Board.BoardDim / Board.SquareDim)(squareRow).mkString(" ")
     val rowOfSquares = Seq.fill(Board.SquareDim)(fullRow).mkString("\n")
@@ -80,8 +92,11 @@ final case class Board(cells: Seq[Cell]) {
   }
 
   override def toString: String =
-    boardFormat.format(cells.map(_.value.getOrElse(Board.EmptyChar)): _*)
+    boardFormat.format(map(_.value.getOrElse(Board.EmptyChar)): _*)
 
+  override protected[this] def newBuilder: Builder[Cell, Board] = Board.newBuilder
+
+  override def length: Int = cells.length
 }
 
 object Board {
@@ -124,6 +139,15 @@ object Board {
       }
   }
 
+  protected def newBuilder: Builder[Cell, Board] =
+    new ArrayBuffer[Cell] mapResult Board.apply
+
+  implicit def canBuildFrom: CanBuildFrom[Board, Cell, Board] =
+    new CanBuildFrom[Board, Cell, Board] {
+      def apply: Builder[Cell, Board] = newBuilder
+      def apply(from: Board): Builder[Cell, Board] = newBuilder
+    }
+
   /**
    * Get the values for the board from a string.
    */
@@ -138,5 +162,4 @@ object Board {
         "Sudoku puzzle must contain " + BoardSize + " cells, not " + values.length)
     values
   }
-
 }
