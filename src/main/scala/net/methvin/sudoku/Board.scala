@@ -10,10 +10,8 @@ import collection.IndexedSeqLike
  * @author Greg Methvin (greg@methvin.net)
  *
  * @param cells A sequence of cells (left to right, top to bottom) of the board
- *
- * @author Greg Methvin (greg@methvin.net)
  */
-final case class Board(cells: Seq[Cell])
+final case class Board private (cells: Seq[Cell])
     extends IndexedSeq[Cell] with IndexedSeqLike[Cell, Board] {
 
   /**
@@ -48,13 +46,13 @@ final case class Board(cells: Seq[Cell])
   def apply(i: Int) = cells(i)
 
   /**
-   * Set a coordinate on the board to a value in a new board.
+   * Solve a cell on the board by setting a value for it
    *
    * @param coord the coordinate to change
    * @param value the value to set it to
-   * @return a new board which is the same as this one, but with that coordinate changed.
+   * @return a new board which has the given cell solved and set to the value given
    */
-  def set(coord: (Int, Int), value: Int): Board = {
+  def solveCell(coord: (Int, Int), value: Int): Board = {
     val (r, c) = coord
     val cell = this(r, c)
     if (!cell.hasPossibleValue(value)) {
@@ -81,7 +79,7 @@ final case class Board(cells: Seq[Cell])
     } else {
       val bestCell = unsolvedCells.minBy(_.values.size)
       bestCell.values.toStream.map { value =>
-        set(bestCell.coord, value).solve
+        solveCell(bestCell.coord, value).solve
       }.flatten.headOption
     }
   }
@@ -121,7 +119,8 @@ object Board {
   /** An empty board */
   val emptyBoard: Board = {
     val indices = 0 until BoardDim
-    Board(for (row <- indices; col <- indices) yield UnsolvedCell(row, col))
+    val initialCells = for (row <- indices; col <- indices) yield UnsolvedCell(row, col)
+    Board(initialCells)
   }
 
   /**
@@ -131,15 +130,24 @@ object Board {
    *            bottom), optionally separated by whitespace.
    * @return a board constructed from these characters
    */
-  def fromString(str: String): Board = {
+  def apply(str: String): Board = {
     (0 until BoardSize)
       .map(i => (i / BoardDim, i % BoardDim))
       .zip(getBoardValues(str))
       .foldLeft(emptyBoard) {
-        case (board, (coord, Some(x))) => board.set(coord, x)
+        case (board, (coord, Some(x))) => board.solveCell(coord, x)
         case (board, _) => board
       }
   }
+
+  /**
+   * Create a board from a set of Sudoku cells
+   *
+   * @param cells a collection of cells from which to create the board.
+   * @return a board constructed from these cells
+   */
+  def apply(cells: Traversable[Cell]): Board =
+    new Board(cells.toSeq.sortBy(cell => cell.row*BoardDim + cell.col))
 
   protected def newBuilder: Builder[Cell, Board] =
     new ArrayBuffer[Cell] mapResult Board.apply

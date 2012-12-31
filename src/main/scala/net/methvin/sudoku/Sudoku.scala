@@ -15,7 +15,7 @@ object Sudoku extends App {
     case "-" => Source.stdin
     case f => Source.fromFile(f)
   }.foreach { source =>
-    val board = Board.fromString(source.mkString)
+    val board = Board(source.mkString)
     val solution = board.solve.getOrElse("No Solution")
     println("\nBoard:\n%s\n\nSolution:\n%s\n".format(board, solution))
   }
