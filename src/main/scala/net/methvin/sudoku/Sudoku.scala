@@ -8,8 +8,7 @@ import io.Source
  * The program gets sudoku puzzles from individual files whose names are given in arguments. If
  * the string "-" is passed as an argument, the program reads from standard in instead of a file.
  *
- * When solving multiple puzzles, the output is printed with two blank lines between the
- * solutions to separate them.
+ * When solving multiple puzzles, we first print the board for each puzzle, then the solution.
  */
 object Sudoku extends App {
   args.map {
@@ -17,7 +16,7 @@ object Sudoku extends App {
     case f => Source.fromFile(f)
   }.foreach { source =>
     val board = Board.fromString(source.mkString)
-    val solved = board.solve
-    println("\n" + solved.getOrElse("No Solution") + "\n")
+    val solution = board.solve.getOrElse("No Solution")
+    println("\nBoard:\n%s\n\nSolution:\n%s\n".format(board, solution))
   }
 }

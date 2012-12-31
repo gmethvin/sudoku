@@ -128,8 +128,8 @@ object Board {
    */
   private def getBoardValues(boardString: String): Seq[Option[Int]] = {
     val values = boardString.filterNot(_.isWhitespace).map(Character.digit(_, 10) match {
-      case -1 => None
-      case d => Some(d)
+      case d if d > 0 => Some(d)
+      case _ => None
     })
     if (values.length != BoardSize) {
       throw new IllegalArgumentException(
