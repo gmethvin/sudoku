@@ -123,30 +123,37 @@ object Board {
   }
 
   /**
-   * Convert a string to a Sudoku board.
-   *
-   * @param str a string of characters containing the numbers for the Sudoku (left to right, top to
-   *            bottom), optionally separated by whitespace.
-   * @return a board constructed from these characters
-   */
-  def apply(str: String): Board = {
-    (0 until BoardSize)
-      .map(i => (i / BoardDim, i % BoardDim))
-      .zip(getBoardValues(str))
-      .foldLeft(emptyBoard) {
-        case (board, (loc, Some(x))) => board.solveCell(loc, x)
-        case (board, _) => board
-      }
-  }
-
-  /**
    * Create a board from a set of Sudoku cells
    *
-   * @param cells a collection of cells from which to create the board.
+   * @param cells a collection of cells from which to create the board
    * @return a board constructed from these cells
    */
   def apply(cells: Traversable[Cell]): Board =
     new Board(cells.toSeq.sortBy(cell => cell.row*BoardDim + cell.col))
+
+  /**
+   * Convert a sequence of values into a Sudoku board.
+   *
+   * @param values an ordered sequence of values for the board (left to right, top to bottom)
+   * @return a board constructed from this sequence with the proper cell values set
+   */
+  def apply(values: Seq[Option[Int]]): Board = {
+    val locations = (0 until BoardSize) map { i => (i / BoardDim, i % BoardDim) }
+    values.zip(locations).foldLeft(emptyBoard) {
+      case (board, (Some(x), loc)) => board.solveCell(loc, x)
+      case (board, _) => board
+    }
+  }
+
+  /**
+   * Convert a string to a Sudoku board.
+   *
+   * @param str a string of characters with optional whitespace. Numbers 1-9 represent values and
+   *            all other non-whitespace characters are blank cells.
+   * @return a board constructed from these characters
+   */
+  def apply(str: String): Board =
+    apply(getBoardValues(str))
 
   protected def newBuilder: Builder[Cell, Board] =
     new ArrayBuffer[Cell] mapResult Board.apply
@@ -157,9 +164,7 @@ object Board {
       def apply(from: Board): Builder[Cell, Board] = newBuilder
     }
 
-  /**
-   * Get the values for the board from a string.
-   */
+  /** Get the values for the board from a string. */
   private def getBoardValues(boardString: String): Seq[Option[Int]] = {
     val values = boardString.filterNot(_.isWhitespace).map(Character.digit(_, 10) match {
       // only numbers 1-9 are counted as values; no other characters
