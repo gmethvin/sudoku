@@ -5,11 +5,16 @@ package net.methvin.sudoku
  *
  * @author Greg Methvin (greg@methvin.net)
  *
- * @param row the row of the cell
- * @param col the column of the cell
+ * @param loc the location (row, col) of this cell
  * @param values the set of possible values this cell can have
  */
-sealed abstract class Cell(val row: Int, val col: Int, val values: Set[Int]) {
+sealed abstract class Cell(val loc: (Int, Int), val values: Set[Int]) {
+
+  /** The row of this cell */
+  val row: Int = loc._1
+
+  /** The column of this cell */
+  val col: Int = loc._2
 
   /** The value of this cell, if it is set */
   val value: Option[Int]
@@ -25,9 +30,6 @@ sealed abstract class Cell(val row: Int, val col: Int, val values: Set[Int]) {
    */
   def -(v: Int): Cell
 
-  /** The coordinate on the board (row, col) */
-  val coord: (Int, Int) = (row, col)
-
   /** The subsquare number of this cell, zero-indexed, left to right, top to bottom */
   val squareNumber: Int = row / Board.SquareDim * Board.SquareDim + col / Board.SquareDim
 
@@ -38,7 +40,7 @@ sealed abstract class Cell(val row: Int, val col: Int, val values: Set[Int]) {
    * @return true if this cell has the same row, column, or subsquare, false otherwise
    */
   def isSameRegion(cell: Cell): Boolean =
-    cell.row == row || cell.col == col || cell.squareNumber == squareNumber
+    cell.loc == loc || cell.squareNumber == squareNumber
 
   /**
    * Check if the given value could be a solution for this cell.
@@ -57,9 +59,8 @@ sealed abstract class Cell(val row: Int, val col: Int, val values: Set[Int]) {
 /**
  * A solved cell
  */
-final case class SolvedCell(
-  override val row: Int, override val col: Int, private val cellValue: Int)
-  extends Cell(row, col, Set(cellValue)) {
+final case class SolvedCell(override val loc: (Int, Int), private val cellValue: Int)
+  extends Cell(loc, Set(cellValue)) {
 
   val value = Some(cellValue)
 
@@ -75,12 +76,11 @@ final case class SolvedCell(
 /**
  * An unsolved cell
  */
-final case class UnsolvedCell(
-  override val row: Int, override val col: Int, override val values: Set[Int] = Board.AllValues)
-  extends Cell(row, col, values) {
+final case class UnsolvedCell(override val loc: (Int, Int),
+  override val values: Set[Int] = Board.AllValues) extends Cell(loc, values) {
 
   val value = None
 
   def -(v: Int): UnsolvedCell =
-    UnsolvedCell(row, col, values - v)
+    UnsolvedCell(loc, values - v)
 }

@@ -11,7 +11,7 @@ import collection.IndexedSeqLike
  *
  * @param cells A sequence of cells (left to right, top to bottom) of the board
  */
-final case class Board private (cells: Seq[Cell])
+final class Board private (val cells: Seq[Cell])
     extends IndexedSeq[Cell] with IndexedSeqLike[Cell, Board] {
 
   /**
@@ -28,13 +28,13 @@ final case class Board private (cells: Seq[Cell])
   val isSolved: Boolean = unsolvedCells.isEmpty
 
   /**
-   * Get a cell at a particular coordinate on the board.
+   * Get a cell at a particular location on the board.
    *
-   * @param coord the coordinate (row, col)
-   * @return the cell on the board for that coordinate
+   * @param loc the location coordinate (row, col)
+   * @return the cell on the board at that location
    */
-  def apply(coord: (Int, Int)): Cell = {
-    val (row, col) = coord
+  def apply(loc: (Int, Int)): Cell = {
+    val (row, col) = loc
     cells(Board.BoardDim * row + col)
   }
 
@@ -48,19 +48,18 @@ final case class Board private (cells: Seq[Cell])
   /**
    * Solve a cell on the board by setting a value for it
    *
-   * @param coord the coordinate to change
+   * @param loc the coordinate of the location to change
    * @param value the value to set it to
    * @return a new board which has the given cell solved and set to the value given
    */
-  def solveCell(coord: (Int, Int), value: Int): Board = {
-    val (r, c) = coord
-    val cell = this(r, c)
+  def solveCell(loc: (Int, Int), value: Int): Board = {
+    val cell = this(loc)
     if (!cell.hasPossibleValue(value)) {
-      throw new RuntimeException("(%d, %d) = %d is invalid".format(r, c, value))
+      throw new RuntimeException("(%d, %d) = %d is invalid".format(cell.row, cell.col, value))
     }
     map { cc =>
       if (cc == cell)
-        SolvedCell(r, c, value)
+        SolvedCell(loc, value)
       else if (cc.isSameRegion(cell))
         cc - value
       else
@@ -79,7 +78,7 @@ final case class Board private (cells: Seq[Cell])
     } else {
       val bestCell = unsolvedCells.minBy(_.values.size)
       bestCell.values.toStream.map { value =>
-        solveCell(bestCell.coord, value).solve
+        solveCell(bestCell.loc, value).solve
       }.flatten.headOption
     }
   }
@@ -119,7 +118,7 @@ object Board {
   /** An empty board */
   val emptyBoard: Board = {
     val indices = 0 until BoardDim
-    val initialCells = for (row <- indices; col <- indices) yield UnsolvedCell(row, col)
+    val initialCells = for (row <- indices; col <- indices) yield UnsolvedCell((row, col))
     Board(initialCells)
   }
 
@@ -135,7 +134,7 @@ object Board {
       .map(i => (i / BoardDim, i % BoardDim))
       .zip(getBoardValues(str))
       .foldLeft(emptyBoard) {
-        case (board, (coord, Some(x))) => board.solveCell(coord, x)
+        case (board, (loc, Some(x))) => board.solveCell(loc, x)
         case (board, _) => board
       }
   }
