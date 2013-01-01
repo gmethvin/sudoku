@@ -50,10 +50,6 @@ sealed abstract class Cell(val loc: (Int, Int), val values: Set[Int]) {
    */
   def hasPossibleValue(v: Int): Boolean =
     values.contains(v)
-
-  override def toString = {
-    "(%d, %d) [%s]".format(row, col, values.mkString)
-  }
 }
 
 /**
@@ -71,6 +67,10 @@ final case class SolvedCell(override val loc: (Int, Int), private val cellValue:
     // removing any other value is a no-op
     this
   }
+
+  override def toString = {
+    "(%d, %d) %s".format(row, col, values.mkString)
+  }
 }
 
 /**
@@ -83,4 +83,8 @@ final case class UnsolvedCell(override val loc: (Int, Int),
 
   def -(v: Int): UnsolvedCell =
     UnsolvedCell(loc, values - v)
+
+  override def toString = {
+    "(%d, %d) [%s]".format(row, col, values.mkString)
+  }
 }

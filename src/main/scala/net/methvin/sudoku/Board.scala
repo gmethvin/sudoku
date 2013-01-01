@@ -1,8 +1,8 @@
 package net.methvin.sudoku
 
-import collection.mutable.{ArrayBuffer, Builder}
-import collection.generic.CanBuildFrom
 import collection.IndexedSeqLike
+import collection.generic.CanBuildFrom
+import collection.mutable.{ArrayBuffer, Builder}
 
 /**
  * An immutable data structure representing a Sudoku board.
