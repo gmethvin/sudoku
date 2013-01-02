@@ -1,6 +1,6 @@
 package net.methvin.sudoku
 
-import collection.IndexedSeqLike
+import collection.IndexedSeqOptimized
 import collection.generic.CanBuildFrom
 import collection.mutable.{ArrayBuffer, Builder}
 
@@ -11,8 +11,8 @@ import collection.mutable.{ArrayBuffer, Builder}
  *
  * @param cells A sequence of cells (left to right, top to bottom) of the board
  */
-final class Board private (val cells: Seq[Cell])
-    extends IndexedSeq[Cell] with IndexedSeqLike[Cell, Board] {
+final class Board private(val cells: Seq[Cell])
+    extends IndexedSeq[Cell] with IndexedSeqOptimized[Cell, Board] {
 
   /**
    * A list of all cells which have not been solved, i.e. cells for which a value has not been set.
@@ -118,7 +118,9 @@ object Board {
   /** An empty board */
   val emptyBoard: Board = {
     val indices = 0 until BoardDim
-    val initialCells = for (row <- indices; col <- indices) yield UnsolvedCell((row, col))
+    val initialCells = for (row <- indices; col <- indices) yield {
+      UnsolvedCell((row, col))
+    }
     Board(initialCells)
   }
 
@@ -129,7 +131,7 @@ object Board {
    * @return a board constructed from these cells
    */
   def apply(cells: Traversable[Cell]): Board =
-    new Board(cells.toSeq.sortBy(cell => cell.row*BoardDim + cell.col))
+    new Board(cells.toSeq.sortBy(cell => cell.row * BoardDim + cell.col))
 
   /**
    * Convert a sequence of values into a Sudoku board.
@@ -138,7 +140,9 @@ object Board {
    * @return a board constructed from this sequence with the proper cell values set
    */
   def apply(values: Seq[Option[Int]]): Board = {
-    val locations = (0 until BoardSize) map { i => (i / BoardDim, i % BoardDim) }
+    val locations = (0 until BoardSize) map {
+      i => (i / BoardDim, i % BoardDim)
+    }
     values.zip(locations).foldLeft(emptyBoard) {
       case (board, (Some(x), loc)) => board.solveCell(loc, x)
       case (board, _) => board
