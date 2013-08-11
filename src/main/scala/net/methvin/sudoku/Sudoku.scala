@@ -11,12 +11,12 @@ import io.Source
  * When solving multiple puzzles, we first print the board for each puzzle, then the solution.
  */
 object Sudoku extends App {
-  args.map {
+  args map {
     case "-" => Source.stdin
     case f => Source.fromFile(f)
-  }.foreach { source =>
+  } foreach { source =>
     val board = Board(source.mkString)
     val solution = board.solve.getOrElse("No Solution")
-    println("\nBoard:\n%s\n\nSolution:\n%s\n".format(board, solution))
+    println(s"\nBoard:\n$board\n\nSolution:\n$solution\n")
   }
 }
