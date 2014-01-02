@@ -16,7 +16,7 @@ object Sudoku extends App {
     case f => Source.fromFile(f)
   } foreach { source =>
     val board = Board(source.mkString)
-    val solution = board.solve.getOrElse("No Solution")
+    val solution = board.solved.getOrElse("No Solution")
     println(s"\nBoard:\n$board\n\nSolution:\n$solution\n")
   }
 }

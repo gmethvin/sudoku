@@ -39,8 +39,7 @@ sealed abstract class Cell(val loc: (Int, Int), val values: Set[Int]) {
    * @param cell the other cell to check
    * @return true if this cell has the same row, column, or subsquare, false otherwise
    */
-  def isSameRegion(cell: Cell): Boolean =
-    cell.loc == loc || cell.squareNumber == squareNumber
+  def isSameRegion(cell: Cell): Boolean = cell.loc == loc || cell.squareNumber == squareNumber
 
   /**
    * Check if the given value could be a solution for this cell.
@@ -48,8 +47,7 @@ sealed abstract class Cell(val loc: (Int, Int), val values: Set[Int]) {
    * @param v the possible value to check
    * @return true if the value is possible in this square, false otherwise
    */
-  def hasPossibleValue(v: Int): Boolean =
-    values.contains(v)
+  def hasPossibleValue(v: Int): Boolean = values.contains(v)
 }
 
 /**
@@ -62,15 +60,12 @@ final case class SolvedCell(override val loc: (Int, Int), private val cellValue:
 
   def -(v: Int): SolvedCell = {
     // since this cell is solved, we cannot remove the value it contains
-    if (v == cellValue)
-      throw new RuntimeException("(%d, %d) = %d has already been solved!".format(row, col, v))
+    if (v == cellValue) throw new IllegalStateException(s"($row, $col) = $v has already been solved!")
     // removing any other value is a no-op
     this
   }
 
-  override def toString = {
-    "(%d, %d) %s".format(row, col, values.mkString)
-  }
+  override def toString = s"($row, $col) ${values.mkString}"
 }
 
 /**
@@ -84,7 +79,5 @@ final case class UnsolvedCell(override val loc: (Int, Int),
   def -(v: Int): UnsolvedCell =
     UnsolvedCell(loc, values - v)
 
-  override def toString = {
-    "(%d, %d) [%s]".format(row, col, values.mkString)
-  }
+  override def toString = s"($row, $col) [${values.mkString}]"
 }

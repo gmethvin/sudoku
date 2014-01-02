@@ -11,14 +11,13 @@ import collection.mutable.{ArrayBuffer, Builder}
  *
  * @param cells A sequence of cells (left to right, top to bottom) of the board
  */
-final class Board private(val cells: Seq[Cell])
-    extends IndexedSeq[Cell] with IndexedSeqOptimized[Cell, Board] {
+final class Board private(val cells: Seq[Cell]) extends IndexedSeq[Cell] with IndexedSeqOptimized[Cell, Board] {
 
   /**
    * A list of all cells which have not been solved, i.e. cells for which a value has not been set.
    *
-   * Note that a cell may have only one possible value and not be considered "solved", for example
-   * in an initial board. Cells are only converted from unsolved to solved within the solve method.
+   * Note that a cell may have only one possible value and not be considered "solved", for example in an initial board.
+   * Cells are only converted from unsolved to solved within the solve method.
    */
   val unsolvedCells: Seq[Cell] = cells.filterNot(_.isSolved)
 
@@ -55,7 +54,7 @@ final class Board private(val cells: Seq[Cell])
   def solveCell(loc: (Int, Int), value: Int): Board = {
     val cell = this(loc)
     if (!cell.hasPossibleValue(value)) {
-      throw new RuntimeException("(%d, %d) = %d is invalid".format(cell.row, cell.col, value))
+      throw new IllegalArgumentException(s"(${cell.row}, ${cell.col}) = $value is invalid")
     }
     map { cc =>
       if (cc == cell)
@@ -72,26 +71,24 @@ final class Board private(val cells: Seq[Cell])
    *
    * @return a new solved board containing all solved cells.
    */
-  def solve: Option[Board] = {
+  def solved: Option[Board] = {
     if (isSolved) {
       Some(this)
     } else {
       val bestCell = unsolvedCells.minBy(_.values.size)
       bestCell.values.toStream.map { value =>
-        solveCell(bestCell.loc, value).solve
+        solveCell(bestCell.loc, value).solved
       }.flatten.headOption
     }
   }
 
-  private lazy val boardFormat: String = {
+  override lazy val toString: String = {
     val squareRow = Seq.fill(Board.SquareDim)("%s").mkString
     val fullRow = Seq.fill(Board.BoardDim / Board.SquareDim)(squareRow).mkString(" ")
     val rowOfSquares = Seq.fill(Board.SquareDim)(fullRow).mkString("\n")
-    Seq.fill(Board.BoardDim / Board.SquareDim)(rowOfSquares).mkString("\n\n")
-  }
-
-  override def toString: String =
+    val boardFormat = Seq.fill(Board.BoardDim / Board.SquareDim)(rowOfSquares).mkString("\n\n")
     boardFormat.format(map(_.value.getOrElse(Board.EmptyChar)): _*)
+  }
 
   override protected[this] def newBuilder: Builder[Cell, Board] = Board.newBuilder
 
@@ -116,13 +113,8 @@ object Board {
   val EmptyChar = '*'
 
   /** An empty board */
-  val emptyBoard: Board = {
-    val indices = 0 until BoardDim
-    val initialCells = for (row <- indices; col <- indices) yield {
-      UnsolvedCell((row, col))
-    }
-    Board(initialCells)
-  }
+  val emptyBoard: Board =
+    Board(for (row <- 0 until BoardDim; col <- 0 until BoardDim) yield UnsolvedCell(row -> col))
 
   /**
    * Create a board from a set of Sudoku cells
@@ -152,12 +144,11 @@ object Board {
   /**
    * Convert a string to a Sudoku board.
    *
-   * @param str a string of characters with optional whitespace. Numbers 1-9 represent values and
-   *            all other non-whitespace characters are blank cells.
+   * @param str a string of characters with optional whitespace. Numbers 1-9 represent values and all other
+   *            non-whitespace characters are blank cells.
    * @return a board constructed from these characters
    */
-  def apply(str: String): Board =
-    apply(getBoardValues(str))
+  def apply(str: String): Board = apply(getBoardValues(str))
 
   protected def newBuilder: Builder[Cell, Board] =
     new ArrayBuffer[Cell] mapResult Board.apply
@@ -176,8 +167,7 @@ object Board {
       case _ => None
     })
     if (values.length != BoardSize)
-      throw new IllegalArgumentException(
-        "Sudoku puzzle must contain " + BoardSize + " cells, not " + values.length)
+      throw new IllegalArgumentException("Sudoku puzzle must contain " + BoardSize + " cells, not " + values.length)
     values
   }
 }
